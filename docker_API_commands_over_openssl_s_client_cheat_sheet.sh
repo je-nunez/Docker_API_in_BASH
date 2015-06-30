@@ -1,60 +1,73 @@
+#!/usr/bin/env bash
+
+# Cheat-sheet to interact with the Docker API low-level, ie., using
+# tools like 'netcat' or 'openssl s_client'
 
 # does expect DOCKER_CERT_PATH
 # checks whether DOCKER_TLS_VERIFY is non-zero or not
 
 container_id=a_container_hexadecimal_id
-V_DOCKER_IP=my_docker_service_ip   # either from $DOCKER_HOST or from $(boot2docker ip), etc
+V_DOCKER_IP=my_docker_service_ip   # either from $DOCKER_HOST or
+                                   # from $(boot2docker ip), etc
 V_DOCKER_PORT=my_docker_service_port   # from $DOCKER_HOST, etc
 
 
-if [[ "$DOCKER_TLS_VERIFY" != "0" ]]; then
-   transport_cmd="openssl s_client -cert  $DOCKER_CERT_PATH/cert.pem  -key   $DOCKER_CERT_PATH/key.pem  -CAfile  $DOCKER_CERT_PATH/ca.pem   -host  $V_DOCKER_IP  -port  $V_DOCKER_PORT -no_ssl2 -quiet "
-else
-   transport_cmd="nc  $V_DOCKER_IP  $V_DOCKER_PORT"
-   # Using socat instead, if available
-   # transport_cmd="socat - tcp:$V_DOCKER_IP:$V_DOCKER_PORT"
-fi
+# Source the library with our Docker utility functions
 
-json_fmt="python -m json.tool"
+. ./docker_low_level_library.sh
 
+# Cheat-sheet
 
 # PING the docker service (answer is not in JSON format)
 
-echo -e  "GET /_ping HTTP/1.0\r\nHost: $V_DOCKER_IP:$V_DOCKER_PORT\r\nUser-Agent: Command-line/0.0.1\r\nAccept: */*\r\n"   | $transport_cmd 2>/dev/null | sed '1,/^'$'\r''$/d'
+Docker_API_raw_string "GET"  "/_ping" | docker_transport_cmd
 
 # Get info of the Docker service
 
-echo -e  "GET /info HTTP/1.0\r\nHost: $V_DOCKER_IP:$V_DOCKER_PORT\r\nUser-Agent: Command-line/0.0.1\r\nAccept: */*\r\n"   | $transport_cmd 2>/dev/null | sed '1,/^'$'\r''$/d' | $json_fmt
+Docker_API_raw_string "GET"  "/info" | docker_transport_cmd | json_fmt
 
 # Get list of Docker images
 
-echo -e  "GET /images/json HTTP/1.0\r\nHost: $V_DOCKER_IP:$V_DOCKER_PORT\r\nUser-Agent: Command-line/0.0.1\r\nAccept: */*\r\n"   | $transport_cmd 2>/dev/null | sed '1,/^'$'\r''$/d' | $json_fmt
+Docker_API_raw_string "GET"  "/images/json" | docker_transport_cmd | json_fmt
 
 # Get list of Docker containers
 
-echo -e  "GET /containers/json?all=1 HTTP/1.0\r\nHost: $V_DOCKER_IP:$V_DOCKER_PORT\r\nUser-Agent: Command-line/0.0.1\r\nAccept: */*\r\n"   | $transport_cmd 2>/dev/null | sed '1,/^'$'\r''$/d' | $json_fmt
+Docker_API_raw_string "GET"  "/containers/json?all=1" | \
+                         docker_transport_cmd | json_fmt
 
 # Inspect a container's settings
 
-echo -e  "GET /containers/${container_id}/json HTTP/1.0\r\nHost: $V_DOCKER_IP:$V_DOCKER_PORT\r\nUser-Agent: Command-line/0.0.1\r\nAccept: */*\r\n"   | $transport_cmd 2>/dev/null | sed '1,/^'$'\r''$/d' | $json_fmt
+Docker_API_raw_string "GET"  "/containers/${container_id}/json" | \
+                         docker_transport_cmd | json_fmt
 
 # Retrieve a container logs, with timestamps=1 (answer is not in JSON format)
 
-echo -e  "GET /containers/${container_id}/logs?stderr=1&stdout=1&timestamps=1 HTTP/1.0\r\nHost: $V_DOCKER_IP:$V_DOCKER_PORT\r\nUser-Agent: Command-line/0.0.1\r\nAccept: */*\r\n"   | $transport_cmd 2>/dev/null | sed '1,/^'$'\r''$/d'
+Docker_API_raw_string "GET"  \
+                      "/containers/${container_id}/logs?stderr=1&stdout=1&timestamps=1" | \
+                         docker_transport_cmd
 
 # PS of processes running inside a container (with ps_args=auxwww)
 
-echo -e  "GET /containers/${container_id}/top?ps_args=auxwww HTTP/1.0\r\nHost: $V_DOCKER_IP:$V_DOCKER_PORT\r\nUser-Agent: Command-line/0.0.1\r\nAccept: */*\r\n"   | $transport_cmd 2>/dev/null | sed '1,/^'$'\r''$/d' | $json_fmt
+Docker_API_raw_string "GET"  \
+                      "/containers/${container_id}/top?ps_args=auxwww" | \
+                         docker_transport_cmd | json_fmt
 
 # Changes done by its filesystem during the running of a container
 
-echo -e  "GET /containers/${container_id}/changes HTTP/1.0\r\nHost: $V_DOCKER_IP:$V_DOCKER_PORT\r\nUser-Agent: Command-line/0.0.1\r\nAccept: */*\r\n"   | $transport_cmd 2>/dev/null | sed '1,/^'$'\r''$/d' | $json_fmt
+Docker_API_raw_string "GET"  \
+                      "/containers/${container_id}/changes" | \
+                         docker_transport_cmd | json_fmt
 
 # Get TAR-BALL image of a container (answer is not in JSON format)
 
-echo -e  "GET /containers/${container_id}/export HTTP/1.0\r\nHost: $V_DOCKER_IP:$V_DOCKER_PORT\r\nUser-Agent: Command-line/0.0.1\r\nAccept: */*\r\n"   | $transport_cmd 2>/dev/null | sed '1,/^'$'\r''$/d'
+Docker_API_raw_string "GET"  \
+                      "/containers/${container_id}/export" | \
+                         docker_transport_cmd
 
-# Get kernel stats for the container (it is a continuous stream, hence head -n 1)
+# Get kernel stats for the container
+# (it is a continuous stream, hence 'head -n 1' below)
 
-echo -e  "GET /containers/${container_id}/stats?stream=0 HTTP/1.0\r\nHost: $V_DOCKER_IP:$V_DOCKER_PORT\r\nUser-Agent: Command-line/0.0.1\r\nAccept: */*\r\n"   | $transport_cmd 2>/dev/null | sed '1,/^'$'\r''$/d' | head -n 1 | $json_fmt
+Docker_API_raw_string "GET"  \
+                      "/containers/${container_id}/stats?stream=0" | \
+                         docker_transport_cmd | head -n 1 | json_fmt
 
