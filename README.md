@@ -6,6 +6,12 @@ An example of the Docker API based on:
 
 e.g., by calling the API in low-level through `openssl s_client` directly.
 
+# WIP
+
+This project is a *work in progress*. The implementation is *incomplete* and subject to change. The documentation can be inaccurate.
+
+# Files
+
 Files:
 
       docker_low_level_library.sh
