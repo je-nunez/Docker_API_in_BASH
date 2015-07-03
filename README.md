@@ -21,8 +21,8 @@ Files:
            Docker API from the BASH shell.
       
       
-      docker_API_commands_over_openssl_s_client_cheat_sheet.sh:
+      examples_of_the_docker_low_level_library_in_BASH.sh:
       
-           A cheat-sheet with some Docker API commands using the library
+           Some examples of some Docker API commands using the library
            'docker_low_level_library.sh' of BASH functions (above).
 
