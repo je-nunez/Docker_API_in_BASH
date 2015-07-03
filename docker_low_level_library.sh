@@ -119,6 +119,14 @@ function _check_environment_vars {
 # Exported functions of this Docker API library which glue the internal calls
 # to the other functions in this library
 #
+# There are versions of the same functions but with a shorter name, eg.,
+#
+#     docker_daemon_info
+#     docker_info
+#
+# which are the same, the latter being more in the spirit of the client
+# program `docker <subprogram>` (eg., `docker info`), and the first name
+# is just more descriptive.
 
 function docker_ping {
 
@@ -141,8 +149,10 @@ function docker_daemon_info {
 }
 
 function docker_info {
-    docker_daemon_info $@
-    return $?
+     # It doesn't need to pass "$@", just that the callee ignore these params,
+     # if any existed
+     docker_daemon_info $@
+     return $?
 }
 
 
@@ -159,6 +169,8 @@ function docker_list_images {
 }
 
 function docker_images {
+     # It doesn't need to pass "$@", just that the callee ignore these params,
+     # if any existed
      docker_list_images $@
      return $?
 }
@@ -177,6 +189,8 @@ function docker_list_containers {
 }
 
 function docker_ps {
+     # It doesn't need to pass "$@", just that the callee ignore these params,
+     # if any existed
      docker_list_containers $@
      return $?
 }
@@ -197,6 +211,8 @@ function docker_inspect_container {
 }
 
 function docker_inspect {
+     # It doesn't need to pass "$@", merely "$1" (the container-id), just that
+     # the callee ignore the extra params, if any existed
      docker_inspect_container $@
      return $?
 }
@@ -218,6 +234,8 @@ function docker_logs_container {
 }
 
 function docker_logs {
+     # It doesn't need to pass "$@", merely "$1" (the container-id), just that
+     # the callee ignore the extra params, if any existed
      docker_logs_container $@
      return $?
 }
@@ -239,6 +257,8 @@ function docker_top_processes {
 }
 
 function docker_top {
+     # It doesn't need to pass "$@", merely "$1" (the container-id), just that
+     # the callee ignore the extra params, if any existed
      docker_top_processes $@
      return $@
 }
@@ -260,6 +280,8 @@ function docker_diff_changes_container {
 }
 
 function docker_diff {
+     # It doesn't need to pass "$@", merely "$1" (the container-id), just that
+     # the callee ignore the extra params, if any existed
      docker_diff_changes_container $@
      return $?
 }
@@ -282,7 +304,9 @@ function docker_save_tar_ball {
 }
 
 function docker_save {
-      docker_save_tar_ball $@
+     # It doesn't need to pass "$@", merely "$1" (the container-id), just that
+     # the callee ignore the extra params, if any existed
+     docker_save_tar_ball $@
 }
 
 
